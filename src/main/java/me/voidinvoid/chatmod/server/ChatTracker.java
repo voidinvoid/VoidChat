@@ -1,9 +1,14 @@
 package me.voidinvoid.chatmod.server;
 
+import me.voidinvoid.chatmod.channel.ChatChannel;
 import me.voidinvoid.chatmod.command.ChatChannelCommand;
+import me.voidinvoid.chatmod.gui.ChatOverrideGUI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiChat;
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -16,40 +21,53 @@ import org.lwjgl.input.Keyboard;
  */
 public class ChatTracker {
 
+    private KeyBinding lobbyKeybind;
+    private KeyBinding modeSwitchKeybind;
+
+    private boolean chatMode = true; //true = new mode
+
     public ChatTracker() {
-        allChat = new KeyBinding("Chat to the ALL channel", Keyboard.KEY_Z, "key.categories.multiplayer");
-        guildChat = new KeyBinding("Chat to the GUILD channel", Keyboard.KEY_X, "key.categories.multiplayer");
-        partyChat = new KeyBinding("Chat to the PARTY channel", Keyboard.KEY_C, "key.categories.multiplayer");
-        replyChat = new KeyBinding("Chat to the REPLY channel", Keyboard.KEY_V, "key.categories.multiplayer");
+        for (ChatChannel c : ChatChannel.values()) {
+            ClientRegistry.registerKeyBinding(c.keyBind);
+        }
 
-        ClientRegistry.registerKeyBinding(allChat);
-        ClientRegistry.registerKeyBinding(guildChat);
-        ClientRegistry.registerKeyBinding(partyChat);
-        ClientRegistry.registerKeyBinding(replyChat);
+        lobbyKeybind = new KeyBinding("Return to the lobby", Keyboard.KEY_L, "key.categories.multiplayer");
+        modeSwitchKeybind = new KeyBinding("Switch Void Chat mode", Keyboard.KEY_M, "key.categories.multiplayer");
+        ClientRegistry.registerKeyBinding(lobbyKeybind); //feature request by MasterGamerPro
+        ClientRegistry.registerKeyBinding(modeSwitchKeybind);
     }
-
-    private KeyBinding allChat, guildChat, partyChat, replyChat;
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public void key(InputEvent.KeyInputEvent e) {
         if (!ServerTracker.isHypixel) return;
-        String chat = null;
-        if (allChat.isPressed()) {
-            chat = "/achat ";
-        } else if (guildChat.isPressed()) {
-            chat = "/gchat ";
-        } else if (partyChat.isPressed()) {
-            chat = "/pchat ";
-        } else if (replyChat.isPressed()) {
-            chat = "/r ";
-        } else if (Minecraft.getMinecraft().gameSettings.keyBindChat.isPressed()) {
-            char c = ChatChannelCommand.activeChannel;
-            if (c == 'a') chat = ""; else
-            chat = "/" + (c == 'r' ? "r " : c + "chat "); //really hacky fix but forge doesnt have event for client chat send D:
+        Minecraft m = Minecraft.getMinecraft();
+        /*if (m.gameSettings.keyBindCommand.isPressed()) {
+            m.displayGuiScreen(new ChatOverrideGUI("/")); maybe will add command chat channel in future or default all text with a /.
+        }*/
+        if (lobbyKeybind.isPressed()) {
+            m.thePlayer.sendChatMessage("/lobby");
+            return;
         }
-        if (chat != null && Minecraft.getMinecraft().currentScreen == null) {
-            Minecraft.getMinecraft().displayGuiScreen(new GuiChat(chat));
-            //Minecraft.getMinecraft().displayGuiScreen(new ChatOverrideGUI(chat));
+        if (modeSwitchKeybind.isPressed()) {
+            chatMode = !chatMode;
+            m.thePlayer.addChatMessage(new ChatComponentText("Chat mode set to ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.YELLOW)).appendSibling(new ChatComponentText(chatMode ? "FANCY" : "CLASSIC").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD))));
+            return;
+        }
+        ChatChannel cc = null;
+        for (ChatChannel c : ChatChannel.values()) {
+            if (c.keyBind.isPressed()) {
+                cc = c;
+                break;
+            }
+        }
+        if (cc == null && m.gameSettings.keyBindChat.isPressed()) {
+            cc = ChatChannel.activeChannel;
+        }
+        if (cc != null && m.currentScreen == null) {
+            if (m.gameSettings.keyBindSneak.isPressed()) {
+                new ChatChannelCommand().processCommand(m.thePlayer, new String[] {cc.name()});
+            }
+            m.displayGuiScreen(chatMode ? new ChatOverrideGUI(cc) : new GuiChat(cc.command));
         }
     }
 }

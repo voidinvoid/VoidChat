@@ -1,6 +1,12 @@
 package me.voidinvoid.chatmod.server;
 
+import me.voidinvoid.chatmod.VoidChatMod;
 import net.minecraft.client.Minecraft;
+import net.minecraft.event.ClickEvent;
+import net.minecraft.event.HoverEvent;
+import net.minecraft.util.ChatComponentText;
+import net.minecraft.util.ChatStyle;
+import net.minecraft.util.EnumChatFormatting;
 import net.minecraftforge.client.event.ClientChatReceivedEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
@@ -30,6 +36,10 @@ public class ServerTracker {
             public void run() {
                 awaitCommand = true;
                 Minecraft.getMinecraft().thePlayer.sendChatMessage("/chat a");
+                if (VoidChatMod.updateInfo != null) {
+                    Minecraft.getMinecraft().thePlayer.addChatMessage(new ChatComponentText("An update to ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.YELLOW)).appendSibling(new ChatComponentText("Void Chat").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.AQUA))).appendSibling(new ChatComponentText(" is available. Click here to view update info.")).setChatStyle(new ChatStyle().setColor(EnumChatFormatting.YELLOW).setChatHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ChatComponentText("Click here to go to the mod forum post to view update info").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.AQUA)))).setChatClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://hypixel.net/threads/forge-mod-1-8-9-void-chat.666957/")))); //phew..
+                    VoidChatMod.updateInfo = null;
+                }
                 r.cancel();
             }
         };
