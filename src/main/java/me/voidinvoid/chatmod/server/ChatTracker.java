@@ -21,7 +21,6 @@ import org.lwjgl.input.Keyboard;
  */
 public class ChatTracker {
 
-    private KeyBinding lobbyKeybind;
     private KeyBinding modeSwitchKeybind;
 
     private boolean chatMode = true; //true = new mode
@@ -31,9 +30,7 @@ public class ChatTracker {
             ClientRegistry.registerKeyBinding(c.keyBind);
         }
 
-        lobbyKeybind = new KeyBinding("Return to the lobby", Keyboard.KEY_L, "key.categories.multiplayer");
         modeSwitchKeybind = new KeyBinding("Switch Void Chat mode", Keyboard.KEY_M, "key.categories.multiplayer");
-        ClientRegistry.registerKeyBinding(lobbyKeybind); //feature request by MasterGamerPro
         ClientRegistry.registerKeyBinding(modeSwitchKeybind);
     }
 
@@ -44,10 +41,6 @@ public class ChatTracker {
         /*if (m.gameSettings.keyBindCommand.isPressed()) {
             m.displayGuiScreen(new ChatOverrideGUI("/")); maybe will add command chat channel in future or default all text with a /.
         }*/
-        if (lobbyKeybind.isPressed()) {
-            m.thePlayer.sendChatMessage("/lobby");
-            return;
-        }
         if (modeSwitchKeybind.isPressed()) {
             chatMode = !chatMode;
             m.thePlayer.addChatMessage(new ChatComponentText("Chat mode set to ").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.YELLOW)).appendSibling(new ChatComponentText(chatMode ? "FANCY" : "CLASSIC").setChatStyle(new ChatStyle().setColor(EnumChatFormatting.GOLD))));
